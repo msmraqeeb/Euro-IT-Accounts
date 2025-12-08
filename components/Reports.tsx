@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { AppData, UserRole } from '../types';
 import { Calendar, Filter, CreditCard, Download, FileDown, Loader2 } from 'lucide-react';
@@ -37,7 +38,8 @@ export const Reports: React.FC<ReportsProps> = ({ data }) => {
       }
     };
 
-    loadImageAsBase64('https://euroitechnology.com/images/EuroIt.png').then(base64 => {
+    // Updated Logo URL
+    loadImageAsBase64('https://i.postimg.cc/59gXKDM0/Euro-IT-gold-Copy-1-06.png').then(base64 => {
       if (base64) setLogoBase64(base64);
     });
   }, []);

@@ -51,7 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isMobile
           <div className="flex items-center gap-3 p-6 border-b border-slate-800">
             <div className="bg-white p-1 rounded-lg">
                 <img 
-                  src="https://euroitechnology.com/images/EuroIt.png" 
+                  src="https://i.postimg.cc/59gXKDM0/Euro-IT-gold-Copy-1-06.png" 
                   alt="Euro IT Logo" 
                   className="w-8 h-8 object-contain" 
                 />

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ViewState, AppData, Client, Payment, Expense, User, UserRole } from './types';
 import { Sidebar } from './components/Sidebar';
@@ -297,7 +298,7 @@ const App: React.FC = () => {
           </button>
           <div className="flex items-center gap-2">
             <img 
-              src="https://euroitechnology.com/images/EuroIt.png" 
+              src="https://i.postimg.cc/59gXKDM0/Euro-IT-gold-Copy-1-06.png" 
               alt="Euro IT Logo" 
               className="h-8 w-auto" 
             />

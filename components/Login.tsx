@@ -30,7 +30,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center mb-6">
           <img 
-            src="https://euroitechnology.com/images/EuroIt.png" 
+            src="https://i.postimg.cc/59gXKDM0/Euro-IT-gold-Copy-1-06.png" 
             alt="Euro IT Logo" 
             className="h-20 w-auto object-contain" 
           />

@@ -1,9 +1,16 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { AppData } from "../types";
 
 const getClient = () => {
-  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+  // Use the provided API Key directly
+  // This avoids relying on 'process' which causes crashes in the Google library
+  const apiKey = 'AlzaSyDT0QNK856nXgTDynd1738nNjU_g-VXyrY';
+  
+  if (!apiKey) {
+    // This error is caught by generateFinancialInsight to prevent app crash
+    throw new Error("API_KEY is missing.");
+  }
+  return new GoogleGenAI({ apiKey });
 };
 
 export const generateFinancialInsight = async (data: AppData): Promise<string> => {
@@ -60,6 +67,6 @@ export const generateFinancialInsight = async (data: AppData): Promise<string> =
     return response.text || "Unable to generate insight at this time.";
   } catch (error) {
     console.error("Error generating insight:", error);
-    return "Error connecting to AI service. Please check your internet connection.";
+    return "AI insights are currently unavailable. (Check API Key)";
   }
 };

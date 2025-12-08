@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { AppData, UserRole } from '../types';
 import { Calendar, Filter, CreditCard, Download, FileDown, Loader2 } from 'lucide-react';

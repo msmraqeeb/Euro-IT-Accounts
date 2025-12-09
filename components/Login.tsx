@@ -104,6 +104,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 Sign in
                 <ArrowRight className="h-4 w-4" />
               </button>
+              <p className="mt-4 text-center text-xs text-slate-400 font-mono">
+                username: viewer@email.com &nbsp;&nbsp; Password: 123456
+              </p>
             </div>
           </form>
         </div>

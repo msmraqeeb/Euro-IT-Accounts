@@ -16,8 +16,15 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     e.preventDefault();
     setError('');
 
-    if (email.toLowerCase() === 'admin@email.com' && password === '123456') {
-      onLogin({ email, name: 'Admin User', role: UserRole.ADMIN });
+    const isAdmin = (email.toLowerCase() === 'admin@email.com' && password === '123456') || 
+                   (email.toLowerCase() === 'euroitofficial@gmail.com' && password === '3uroIT2026');
+
+    if (isAdmin) {
+      onLogin({ 
+        email, 
+        name: email.toLowerCase() === 'euroitofficial@gmail.com' ? 'Euro IT Admin' : 'Admin User', 
+        role: UserRole.ADMIN 
+      });
     } else if (email.toLowerCase() === 'viewer@email.com' && password === '123456') {
       onLogin({ email, name: 'Viewer User', role: UserRole.VIEWER });
     } else {

@@ -259,7 +259,7 @@ const App: React.FC = () => {
                     onClick={() => {
                         // Force navigate to settings via a temporary hack or just render settings
                         setHasConnectionError(false); // Clear error to allow rendering
-                        setCurrentUser({ email: 'admin@email.com', name: 'Admin', role: UserRole.ADMIN }); // Force admin to access settings
+                        setCurrentUser({ email: 'euroitofficial@gmail.com', name: 'Euro IT Admin', role: UserRole.ADMIN }); // Force admin to access settings
                         setCurrentView(ViewState.SETTINGS);
                     }}
                     className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg font-medium"

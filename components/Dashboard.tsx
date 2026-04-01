@@ -1,12 +1,11 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { AppData } from '../types';
-import { generateFinancialInsight } from '../services/geminiService';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell, Legend 
 } from 'recharts';
-import { TrendingUp, TrendingDown, Sparkles, Loader2, ArrowUpRight, ArrowDownRight, PieChart as PieChartIcon, AlertCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, PieChart as PieChartIcon, AlertCircle } from 'lucide-react';
 
 interface DashboardProps {
   data: AppData;
@@ -15,9 +14,6 @@ interface DashboardProps {
 const COLORS = ['#2563EB', '#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE', '#1E40AF'];
 
 export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
-  const [insight, setInsight] = useState<string | null>(null);
-  const [loadingInsight, setLoadingInsight] = useState(false);
-
   const stats = useMemo(() => {
     // Calculate Income (Received - Refunds)
     const totalIncome = data.payments.reduce((sum, p) => {
@@ -86,12 +82,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
     return Object.keys(categories).map(name => ({ name, value: categories[name] }));
   }, [data]);
 
-  const handleGenerateInsight = async () => {
-    setLoadingInsight(true);
-    const result = await generateFinancialInsight(data);
-    setInsight(result);
-    setLoadingInsight(false);
-  };
+
 
   return (
     <div className="p-6 space-y-8 max-w-7xl mx-auto">
@@ -157,50 +148,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
         </div>
       </div>
 
-      {/* AI Insight Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-6 h-6 text-yellow-300" />
-              <h2 className="text-xl font-bold">AI Financial Advisor</h2>
-            </div>
-            {!insight && !loadingInsight && (
-              <button 
-                onClick={handleGenerateInsight}
-                className="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow-sm"
-              >
-                Analyze Finances
-              </button>
-            )}
-          </div>
-          
-          {loadingInsight ? (
-            <div className="flex items-center gap-3 py-2">
-              <Loader2 className="w-5 h-5 animate-spin text-blue-200" />
-              <p className="text-blue-100">Analyzing your transaction data...</p>
-            </div>
-          ) : insight ? (
-            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-              <p className="text-blue-50 leading-relaxed">{insight}</p>
-              <button 
-                onClick={() => setInsight(null)}
-                className="mt-3 text-xs text-blue-200 hover:text-white underline"
-              >
-                Clear Insight
-              </button>
-            </div>
-          ) : (
-            <p className="text-blue-100 max-w-2xl">
-              Get intelligent insights about your business finances using Gemini AI. 
-              Identify spending patterns and find opportunities to increase your profit margin.
-            </p>
-          )}
-        </div>
-        {/* Decorative background elements */}
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-blue-400 opacity-20 rounded-full blur-3xl"></div>
-      </div>
+
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

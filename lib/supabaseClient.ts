@@ -4,6 +4,15 @@ const STORAGE_KEY_URL = 'biztrack_sb_url';
 const STORAGE_KEY_KEY = 'biztrack_sb_key';
 
 export const getSupabaseConfig = () => {
+  // Try to get from environment variables first
+  const envUrl = import.meta.env.VITE_SUPABASE_URL;
+  const envKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  if (envUrl && envKey) {
+    return { url: envUrl as string, key: envKey as string };
+  }
+
+  // Fallback to local storage (for users who configured it via the Settings page)
   const url = localStorage.getItem(STORAGE_KEY_URL);
   const key = localStorage.getItem(STORAGE_KEY_KEY);
   return { url, key };

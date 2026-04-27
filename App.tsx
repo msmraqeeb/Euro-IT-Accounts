@@ -9,6 +9,7 @@ import { Payments } from './components/Payments';
 import { Reports } from './components/Reports';
 import { Settings } from './components/Settings';
 import { Login } from './components/Login';
+import { Footer } from './components/Footer';
 import { Menu } from 'lucide-react';
 import { dataService } from './services/dataService';
 
@@ -307,8 +308,11 @@ const App: React.FC = () => {
           <div className="w-8" /> {/* Spacer */}
         </div>
 
-        <div id="main-scroll-container" className="flex-1 overflow-auto print:!overflow-visible print:!h-auto print:!block">
-          {renderContent()}
+        <div id="main-scroll-container" className="flex-1 overflow-auto print:!overflow-visible print:!h-auto print:!block flex flex-col">
+          <div className="flex-1 pb-8">
+            {renderContent()}
+          </div>
+          <Footer />
         </div>
       </main>
     </div>

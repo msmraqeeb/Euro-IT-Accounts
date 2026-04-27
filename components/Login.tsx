@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { User, UserRole } from '../types';
 import { Lock, Mail, ArrowRight } from 'lucide-react';
+import { Footer } from './Footer';
 
 interface LoginProps {
   onLogin: (user: User) => void;
@@ -33,8 +34,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="flex-1 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center mb-6">
           <img 
             src="https://i.postimg.cc/59gXKDM0/Euro-IT-gold-Copy-1-06.png" 
@@ -117,7 +119,9 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </div>
           </form>
         </div>
+        </div>
       </div>
+      <Footer />
     </div>
   );
 };

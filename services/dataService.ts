@@ -1,8 +1,13 @@
-import { getSupabaseClient } from '../lib/supabaseClient';
 import { AppData, Client, Expense, Payment } from '../types';
 
 const STORAGE_KEY = 'biztrack_data_v1';
 const CPANEL_API_KEY = 'biztrack_cpanel_api_url';
+
+// Clear legacy Supabase storage keys if present to prevent unwanted Supabase connections
+if (typeof window !== 'undefined') {
+  localStorage.removeItem('biztrack_sb_url');
+  localStorage.removeItem('biztrack_sb_key');
+}
 
 const DEFAULT_DATA: AppData = {
   clients: [],
@@ -13,7 +18,9 @@ const DEFAULT_DATA: AppData = {
 // Helper to get cPanel API URL from env or localStorage
 export const getCpanelApiUrl = (): string | null => {
   const envUrl = import.meta.env.VITE_API_URL;
-  if (envUrl) return envUrl as string;
+  if (envUrl && envUrl.trim() !== '' && !envUrl.includes('your-domain.com')) {
+    return envUrl.trim();
+  }
   return localStorage.getItem(CPANEL_API_KEY);
 };
 
@@ -40,10 +47,9 @@ export const dataService = {
   async fetchData(): Promise<AppData> {
     const apiUrl = getCpanelApiUrl();
 
-    // 1. Try cPanel API first if configured
     if (apiUrl) {
       try {
-        const res = await fetch(`${apiUrl}?action=fetchData`);
+        const res = await fetch(`${apiUrl}?action=fetchData`, { cache: 'no-store' });
         const json = await res.json();
         if (json.status === 'success' && json.data) {
           const normalizedClients = (json.data.clients || []).map((c: any) => ({
@@ -59,40 +65,11 @@ export const dataService = {
         throw new Error(json.message || "Failed to fetch from cPanel API");
       } catch (error: any) {
         console.error("cPanel API fetch error:", error);
-        alert(`Connection Warning: Could not fetch data from cPanel Database. \n\nError: ${error.message || 'Unknown error'}`);
+        alert(`cPanel Connection Warning: Could not fetch data.\n\nError: ${error.message || 'Unknown error'}`);
       }
     }
 
-    // 2. Fallback to Supabase if configured
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      try {
-        const [clients, payments, expenses] = await Promise.all([
-          supabase.from('clients').select('*'),
-          supabase.from('payments').select('*'),
-          supabase.from('expenses').select('*')
-        ]);
-
-        if (clients.error) throw clients.error;
-        if (payments.error) throw payments.error;
-        if (expenses.error) throw expenses.error;
-
-        const normalizedClients = (clients.data || []).map((c: any) => ({
-          ...c,
-          isActive: c.isActive !== false
-        }));
-
-        return {
-          clients: normalizedClients,
-          payments: payments.data || [],
-          expenses: expenses.data || []
-        };
-      } catch (error: any) {
-        console.error("Supabase fetch error:", error);
-      }
-    }
-
-    // 3. LocalStorage fallback
+    // Fallback to local data
     const local = getLocalData();
     local.clients = local.clients.map(c => ({...c, isActive: c.isActive !== false}));
     return local;
@@ -111,15 +88,9 @@ export const dataService = {
       return;
     }
 
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      const { error } = await supabase.from('clients').insert([client]);
-      if (error) throw new Error(`Failed to save client: ${error.message}`);
-    } else {
-      const data = getLocalData();
-      data.clients.push(client);
-      saveLocalData(data);
-    }
+    const data = getLocalData();
+    data.clients.push(client);
+    saveLocalData(data);
   },
 
   async updateClient(client: Client): Promise<void> {
@@ -135,16 +106,9 @@ export const dataService = {
       return;
     }
 
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      const { id, ...updates } = client;
-      const { error } = await supabase.from('clients').update(updates).eq('id', id);
-      if (error) throw new Error(`Failed to update client: ${error.message}`);
-    } else {
-      const data = getLocalData();
-      data.clients = data.clients.map(c => c.id === client.id ? client : c);
-      saveLocalData(data);
-    }
+    const data = getLocalData();
+    data.clients = data.clients.map(c => c.id === client.id ? client : c);
+    saveLocalData(data);
   },
 
   async addPayment(payment: Payment): Promise<void> {
@@ -160,15 +124,9 @@ export const dataService = {
       return;
     }
 
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      const { error } = await supabase.from('payments').insert([payment]);
-      if (error) throw new Error(`Failed to save payment: ${error.message}`);
-    } else {
-      const data = getLocalData();
-      data.payments.push(payment);
-      saveLocalData(data);
-    }
+    const data = getLocalData();
+    data.payments.push(payment);
+    saveLocalData(data);
   },
 
   async updatePayment(payment: Payment): Promise<void> {
@@ -184,16 +142,9 @@ export const dataService = {
       return;
     }
 
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      const { id, ...updates } = payment;
-      const { error } = await supabase.from('payments').update(updates).eq('id', id);
-      if (error) throw new Error(`Failed to update payment: ${error.message}`);
-    } else {
-      const data = getLocalData();
-      data.payments = data.payments.map(p => p.id === payment.id ? payment : p);
-      saveLocalData(data);
-    }
+    const data = getLocalData();
+    data.payments = data.payments.map(p => p.id === payment.id ? payment : p);
+    saveLocalData(data);
   },
 
   async deletePayment(id: string): Promise<void> {
@@ -209,15 +160,9 @@ export const dataService = {
       return;
     }
 
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      const { error } = await supabase.from('payments').delete().eq('id', id);
-      if (error) throw new Error(`Failed to delete payment: ${error.message}`);
-    } else {
-      const data = getLocalData();
-      data.payments = data.payments.filter(p => p.id !== id);
-      saveLocalData(data);
-    }
+    const data = getLocalData();
+    data.payments = data.payments.filter(p => p.id !== id);
+    saveLocalData(data);
   },
 
   async addExpense(expense: Expense): Promise<void> {
@@ -233,15 +178,9 @@ export const dataService = {
       return;
     }
 
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      const { error } = await supabase.from('expenses').insert([expense]);
-      if (error) throw new Error(`Failed to save expense: ${error.message}`);
-    } else {
-      const data = getLocalData();
-      data.expenses.push(expense);
-      saveLocalData(data);
-    }
+    const data = getLocalData();
+    data.expenses.push(expense);
+    saveLocalData(data);
   },
 
   async deleteExpense(id: string): Promise<void> {
@@ -257,15 +196,9 @@ export const dataService = {
       return;
     }
 
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      const { error } = await supabase.from('expenses').delete().eq('id', id);
-      if (error) throw new Error(`Failed to delete expense: ${error.message}`);
-    } else {
-      const data = getLocalData();
-      data.expenses = data.expenses.filter(e => e.id !== id);
-      saveLocalData(data);
-    }
+    const data = getLocalData();
+    data.expenses = data.expenses.filter(e => e.id !== id);
+    saveLocalData(data);
   },
 
   async importData(newData: AppData): Promise<void> {
@@ -277,24 +210,10 @@ export const dataService = {
       return;
     }
 
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      if (newData.clients.length) await supabase.from('clients').upsert(newData.clients);
-      if (newData.payments.length) await supabase.from('payments').upsert(newData.payments);
-      if (newData.expenses.length) await supabase.from('expenses').upsert(newData.expenses);
-    } else {
-      saveLocalData(newData);
-    }
+    saveLocalData(newData);
   },
 
   async clearData(): Promise<void> {
-    const supabase = getSupabaseClient();
-    if (supabase) {
-      await supabase.from('payments').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('expenses').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-      await supabase.from('clients').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-    } else {
-      localStorage.removeItem(STORAGE_KEY);
-    }
+    localStorage.removeItem(STORAGE_KEY);
   }
 };

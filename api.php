@@ -29,6 +29,28 @@ try {
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
     ]);
+
+    // Ensure users table exists
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `users` (
+      `id` VARCHAR(36) NOT NULL,
+      `name` VARCHAR(255) NOT NULL,
+      `email` VARCHAR(255) NOT NULL UNIQUE,
+      `password` VARCHAR(255) NOT NULL,
+      `role` VARCHAR(50) DEFAULT 'ADMIN',
+      `createdAt` BIGINT DEFAULT 0,
+      PRIMARY KEY (`id`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    // Seed default admin users if empty
+    $checkUsers = $pdo->query("SELECT COUNT(*) as count FROM users")->fetch();
+    if ($checkUsers && (int)$checkUsers['count'] === 0) {
+        $seedStmt = $pdo->prepare("INSERT INTO users (id, name, email, password, role, createdAt) VALUES 
+            ('user_msmraqeeb', 'Shakil Mahmud', 'msmraqeeb@gmail.com', 'msm039raqeeb', 'ADMIN', 1771449600000),
+            ('user_admin', 'Admin User', 'admin@email.com', '123456', 'ADMIN', 1764000000000),
+            ('user_euroit', 'Euro IT Admin', 'euroitofficial@gmail.com', '3uroIT2026', 'ADMIN', 1764000000000),
+            ('user_viewer', 'Viewer User', 'viewer@email.com', '123456', 'VIEWER', 1764000000000)");
+        $seedStmt->execute();
+    }
 } catch (PDOException $e) {
     echo json_encode(["status" => "error", "message" => "Database Connection Failed: " . $e->getMessage()]);
     exit();
@@ -39,7 +61,7 @@ $input = json_decode(file_get_contents('php://input'), true);
 
 switch ($action) {
 
-    // 1. FETCH ALL DATA (Clients, Payments, Expenses)
+    // 1. FETCH ALL DATA (Clients, Payments, Expenses, Users)
     case 'fetchData':
         try {
             $clientsStmt = $pdo->query("SELECT * FROM clients");
@@ -64,12 +86,19 @@ switch ($action) {
                 $expense['amount'] = (float)$expense['amount'];
             }
 
+            $usersStmt = $pdo->query("SELECT id, name, email, password, role, createdAt FROM users");
+            $users = $usersStmt ? $usersStmt->fetchAll() : [];
+            foreach ($users as &$user) {
+                $user['createdAt'] = (int)($user['createdAt'] ?? 0);
+            }
+
             echo json_encode([
                 "status" => "success",
                 "data" => [
                     "clients" => $clients,
                     "payments" => $payments,
-                    "expenses" => $expenses
+                    "expenses" => $expenses,
+                    "users" => $users
                 ]
             ]);
         } catch (Exception $e) {
@@ -77,6 +106,7 @@ switch ($action) {
             echo json_encode(["status" => "error", "message" => $e->getMessage()]);
         }
         break;
+
 
     // 2. ADD / UPDATE CLIENT
     case 'saveClient':
@@ -183,7 +213,45 @@ switch ($action) {
         }
         break;
 
+    // 7. ADD / UPDATE USER
+    case 'saveUser':
+        try {
+            $sql = "INSERT INTO users (id, name, email, password, role, createdAt)
+                    VALUES (:id, :name, :email, :password, :role, :createdAt)
+                    ON DUPLICATE KEY UPDATE 
+                    name=:name, email=:email, password=:password, role=:role";
+            
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([
+                ':id' => $input['id'],
+                ':name' => $input['name'],
+                ':email' => $input['email'],
+                ':password' => $input['password'],
+                ':role' => $input['role'] ?? 'ADMIN',
+                ':createdAt' => $input['createdAt'] ?? round(microtime(true) * 1000)
+            ]);
+
+            echo json_encode(["status" => "success", "message" => "User saved successfully"]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+        }
+        break;
+
+    // 8. DELETE USER
+    case 'deleteUser':
+        try {
+            $stmt = $pdo->prepare("DELETE FROM users WHERE id = :id");
+            $stmt->execute([':id' => $input['id'] ?? $_GET['id'] ?? '']);
+            echo json_encode(["status" => "success", "message" => "User deleted"]);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(["status" => "error", "message" => $e->getMessage()]);
+        }
+        break;
+
     default:
         echo json_encode(["status" => "online", "message" => "Euro IT Accounts API is running"]);
         break;
 }
+

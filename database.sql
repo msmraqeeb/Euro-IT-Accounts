@@ -8,6 +8,26 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 DROP TABLE IF EXISTS `payments`;
 DROP TABLE IF EXISTS `expenses`;
 DROP TABLE IF EXISTS `clients`;
+DROP TABLE IF EXISTS `users`;
+
+-- Table structure for users
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` VARCHAR(36) NOT NULL,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL UNIQUE,
+  `password` VARCHAR(255) NOT NULL,
+  `role` VARCHAR(50) DEFAULT 'ADMIN',
+  `createdAt` BIGINT DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Initial users data
+INSERT INTO `users` (`id`, `name`, `email`, `password`, `role`, `createdAt`) VALUES
+('user_msmraqeeb', 'Shakil Mahmud', 'msmraqeeb@gmail.com', 'msm039raqeeb', 'ADMIN', 1771449600000),
+('user_admin', 'Admin User', 'admin@email.com', '123456', 'ADMIN', 1764000000000),
+('user_euroit', 'Euro IT Admin', 'euroitofficial@gmail.com', '3uroIT2026', 'ADMIN', 1764000000000),
+('user_viewer', 'Viewer User', 'viewer@email.com', '123456', 'VIEWER', 1764000000000);
+
 
 -- Table structure for clients
 CREATE TABLE IF NOT EXISTS `clients` (

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { LayoutDashboard, Users, Receipt, PieChart, LogOut, Settings, CreditCard, FileBarChart } from 'lucide-react';
+import { LayoutDashboard, Users, Receipt, PieChart, LogOut, Settings, CreditCard, FileBarChart, FileSignature } from 'lucide-react';
 import { ViewState, User, UserRole } from '../types';
 
 interface SidebarProps {
@@ -16,14 +16,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isMobile
   const navItems = [
     { id: ViewState.DASHBOARD, label: 'Dashboard', icon: LayoutDashboard },
     { id: ViewState.CLIENTS, label: 'Clients', icon: Users },
+    { id: ViewState.AGREEMENTS, label: 'Agreements', icon: FileSignature },
     { id: ViewState.PAYMENTS, label: 'Payments', icon: CreditCard },
     { id: ViewState.EXPENSES, label: 'Expenses', icon: Receipt },
     { id: ViewState.REPORTS, label: 'Reports', icon: FileBarChart },
   ];
 
-  if (user.role === UserRole.ADMIN) {
+
+  const isSuperAdmin = ['admin@email.com', 'msmraqeeb@gmail.com'].includes(user.email.toLowerCase());
+
+  if (isSuperAdmin) {
     navItems.push({ id: ViewState.SETTINGS, label: 'Settings', icon: Settings });
   }
+
 
   const handleNavClick = (view: ViewState) => {
     setView(view);

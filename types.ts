@@ -2,11 +2,13 @@
 export enum ViewState {
   DASHBOARD = 'DASHBOARD',
   CLIENTS = 'CLIENTS',
+  AGREEMENTS = 'AGREEMENTS',
   PAYMENTS = 'PAYMENTS',
   EXPENSES = 'EXPENSES',
   REPORTS = 'REPORTS',
   SETTINGS = 'SETTINGS'
 }
+
 
 export enum UserRole {
   ADMIN = 'ADMIN',
@@ -14,9 +16,19 @@ export enum UserRole {
 }
 
 export interface User {
+  id?: string;
   email: string;
   name: string;
   role: UserRole;
+}
+
+export interface AppUser {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  role: UserRole;
+  createdAt?: number;
 }
 
 export interface Client {
@@ -54,6 +66,7 @@ export interface AppData {
   clients: Client[];
   payments: Payment[];
   expenses: Expense[];
+  users?: AppUser[];
 }
 
 export interface FinancialSummary {

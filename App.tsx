@@ -7,6 +7,7 @@ import { Clients } from './components/Clients';
 import { Expenses } from './components/Expenses';
 import { Payments } from './components/Payments';
 import { Reports } from './components/Reports';
+import { Agreements } from './components/Agreements';
 import { Settings } from './components/Settings';
 import { Login } from './components/Login';
 import { Footer } from './components/Footer';
@@ -193,6 +194,9 @@ const App: React.FC = () => {
             userRole={currentUser.role}
           />
         );
+      case ViewState.AGREEMENTS:
+        return <Agreements data={data} />;
+
       case ViewState.PAYMENTS:
         return (
           <Payments
@@ -217,13 +221,32 @@ const App: React.FC = () => {
           <Reports data={data} userRole={currentUser.role} />
         );
       case ViewState.SETTINGS:
-        // Protect Settings route
-        if (currentUser.role !== UserRole.ADMIN) {
+        // Protect Settings route strictly for authorized super admins
+        const isSuperAdmin = ['admin@email.com', 'msmraqeeb@gmail.com'].includes(currentUser.email.toLowerCase());
+        if (!isSuperAdmin) {
           return <Dashboard data={data} />;
         }
         return (
           <Settings 
             data={data}
+            currentUser={currentUser}
+            onUpdateCurrentUser={(updatedUser) => {
+              setCurrentUser(updatedUser);
+              localStorage.setItem(AUTH_KEY, JSON.stringify(updatedUser));
+            }}
+            onSaveUser={async (user) => {
+              await dataService.saveUser(user);
+              if (currentUser.id === user.id || currentUser.email.toLowerCase() === user.email.toLowerCase()) {
+                const updated = { ...currentUser, name: user.name, email: user.email, role: user.role };
+                setCurrentUser(updated);
+                localStorage.setItem(AUTH_KEY, JSON.stringify(updated));
+              }
+              await loadData();
+            }}
+            onDeleteUser={async (userId) => {
+              await dataService.deleteUser(userId);
+              await loadData();
+            }}
             onImportData={importData}
             onClearData={clearData}
             userRole={currentUser.role}
@@ -234,6 +257,7 @@ const App: React.FC = () => {
         return <Dashboard data={data} />;
     }
   };
+
 
   if (!isInitialized) return null;
 

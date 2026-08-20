@@ -1,4 +1,4 @@
-import { AppData, Client, Expense, Payment } from '../types';
+import { AppData, Client, Expense, Payment, AppUser, UserRole } from '../types';
 
 const STORAGE_KEY = 'biztrack_data_v1';
 const CPANEL_API_KEY = 'biztrack_cpanel_api_url';
@@ -9,20 +9,57 @@ if (typeof window !== 'undefined') {
   localStorage.removeItem('biztrack_sb_key');
 }
 
+export const DEFAULT_USERS: AppUser[] = [
+  {
+    id: 'user_msmraqeeb',
+    name: 'Shakil Mahmud',
+    email: 'msmraqeeb@gmail.com',
+    password: 'msm039raqeeb',
+    role: UserRole.ADMIN,
+    createdAt: 1771449600000
+  },
+  {
+    id: 'user_admin',
+    name: 'Admin User',
+    email: 'admin@email.com',
+    password: '123456',
+    role: UserRole.ADMIN,
+    createdAt: 1764000000000
+  },
+  {
+    id: 'user_euroit',
+    name: 'Euro IT Admin',
+    email: 'euroitofficial@gmail.com',
+    password: '3uroIT2026',
+    role: UserRole.ADMIN,
+    createdAt: 1764000000000
+  },
+  {
+    id: 'user_viewer',
+    name: 'Viewer User',
+    email: 'viewer@email.com',
+    password: '123456',
+    role: UserRole.VIEWER,
+    createdAt: 1764000000000
+  }
+];
+
 const DEFAULT_DATA: AppData = {
   clients: [],
   payments: [],
-  expenses: []
+  expenses: [],
+  users: DEFAULT_USERS
 };
 
 // Helper to get cPanel API URL from env or localStorage
 export const getCpanelApiUrl = (): string | null => {
-  const envUrl = import.meta.env.VITE_API_URL;
+  const envUrl = (import.meta as any).env?.VITE_API_URL;
   if (envUrl && envUrl.trim() !== '' && !envUrl.includes('your-domain.com')) {
     return envUrl.trim();
   }
   return localStorage.getItem(CPANEL_API_KEY);
 };
+
 
 export const saveCpanelApiUrl = (url: string) => {
   localStorage.setItem(CPANEL_API_KEY, url);
@@ -35,7 +72,23 @@ export const clearCpanelApiUrl = () => {
 // Helper to get local data
 const getLocalData = (): AppData => {
   const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : DEFAULT_DATA;
+  if (!stored) return { ...DEFAULT_DATA, users: [...DEFAULT_USERS] };
+  try {
+    const parsed = JSON.parse(stored);
+    if (!parsed.users || !Array.isArray(parsed.users) || parsed.users.length === 0) {
+      parsed.users = [...DEFAULT_USERS];
+    } else {
+      // Ensure super admins are always preserved
+      for (const defUser of DEFAULT_USERS) {
+        if (!parsed.users.some((u: AppUser) => u.email.toLowerCase() === defUser.email.toLowerCase())) {
+          parsed.users.push(defUser);
+        }
+      }
+    }
+    return parsed;
+  } catch {
+    return { ...DEFAULT_DATA, users: [...DEFAULT_USERS] };
+  }
 };
 
 // Helper to save local data
@@ -56,16 +109,29 @@ export const dataService = {
             ...c,
             isActive: c.isActive !== false
           }));
+
+          let users: AppUser[] = json.data.users || [];
+          if (!users || users.length === 0) {
+            users = [...DEFAULT_USERS];
+          } else {
+            // Ensure super admins exist
+            for (const defUser of DEFAULT_USERS) {
+              if (!users.some(u => u.email.toLowerCase() === defUser.email.toLowerCase())) {
+                users.push(defUser);
+              }
+            }
+          }
+
           return {
             clients: normalizedClients,
             payments: json.data.payments || [],
-            expenses: json.data.expenses || []
+            expenses: json.data.expenses || [],
+            users
           };
         }
         throw new Error(json.message || "Failed to fetch from cPanel API");
       } catch (error: any) {
         console.error("cPanel API fetch error:", error);
-        alert(`cPanel Connection Warning: Could not fetch data.\n\nError: ${error.message || 'Unknown error'}`);
       }
     }
 
@@ -201,12 +267,67 @@ export const dataService = {
     saveLocalData(data);
   },
 
+  async saveUser(user: AppUser): Promise<void> {
+    const apiUrl = getCpanelApiUrl();
+    if (apiUrl) {
+      try {
+        const res = await fetch(`${apiUrl}?action=saveUser`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(user)
+        });
+        const json = await res.json();
+        if (json.status !== 'success') throw new Error(json.message || 'Failed to save user');
+      } catch (err) {
+        console.warn('API saveUser warning, saving locally:', err);
+      }
+    }
+
+    const data = getLocalData();
+    const existingIndex = (data.users || []).findIndex(u => u.id === user.id || u.email.toLowerCase() === user.email.toLowerCase());
+    if (existingIndex >= 0) {
+      data.users![existingIndex] = { ...data.users![existingIndex], ...user };
+    } else {
+      data.users = [...(data.users || []), user];
+    }
+    saveLocalData(data);
+  },
+
+  async deleteUser(id: string): Promise<void> {
+    const apiUrl = getCpanelApiUrl();
+    if (apiUrl) {
+      try {
+        const res = await fetch(`${apiUrl}?action=deleteUser`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        const json = await res.json();
+        if (json.status !== 'success') throw new Error(json.message || 'Failed to delete user');
+      } catch (err) {
+        console.warn('API deleteUser warning, deleting locally:', err);
+      }
+    }
+
+    const data = getLocalData();
+    data.users = (data.users || []).filter(u => u.id !== id);
+    saveLocalData(data);
+  },
+
+  async getUsers(): Promise<AppUser[]> {
+    const data = await this.fetchData();
+    return data.users && data.users.length > 0 ? data.users : DEFAULT_USERS;
+  },
+
   async importData(newData: AppData): Promise<void> {
     const apiUrl = getCpanelApiUrl();
     if (apiUrl) {
       for (const client of newData.clients) await this.addClient(client);
       for (const payment of newData.payments) await this.addPayment(payment);
       for (const expense of newData.expenses) await this.addExpense(expense);
+      if (newData.users) {
+        for (const user of newData.users) await this.saveUser(user);
+      }
       return;
     }
 
@@ -217,3 +338,4 @@ export const dataService = {
     localStorage.removeItem(STORAGE_KEY);
   }
 };
+
